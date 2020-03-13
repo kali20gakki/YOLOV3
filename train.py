@@ -34,7 +34,7 @@ elif train_parameters['yolo_type'] == 'DarkNet53_YOLOv3':
     from models.DarkNet53_YOLOv3 import get_yolo
     
 
-
+logger.info('loading parameters...')
 # YOLO模型选择
 yolo_config = train_parameters['yolo_tiny_cfg'] if train_parameters["use_tiny"] else train_parameters["yolo_cfg"]
 # 数据集路径
@@ -49,6 +49,9 @@ label_dict = dict(zip(label_dict.values(), label_dict.keys()))
 test_file_path = os.path.join(data_dir, train_parameters['eval_list'])
 val_data = []
 val_data2 = []
+logger.info('loading parameters done!')
+
+logger.info('loading eval dataset...')
 # 加载测试集
 with open(test_file_path, 'r') as f:
     lines = f.readlines()
@@ -100,7 +103,7 @@ with open(test_file_path, 'r') as f:
         img = img[np.newaxis, :]
         val_data.append([img, image_shape, gt_label, gt_boxes, difficult, image_path])
         val_data2.append([img, image_shape, gt_list])
-        print('加载数据集成功')
+        logger.info('loading eval dataset done!')
 
 
 
@@ -176,7 +179,7 @@ def eval(program, fetch_list, eval_program, eval_fetch_list, eval_feeder):
         datas.append([pred_list, gt_boxes, gt_label, difficult])
         
     pred = np.array(pred)    
-    print('pred', pred.shape)
+    #print('pred', pred.shape)
     
     cur_map_v, accum_map_v = exe.run(eval_program, feed=eval_feeder.feed(datas), fetch_list=eval_fetch_list,
                                      return_numpy=True)
@@ -385,7 +388,7 @@ def get_loss(model, outputs, gt_box, gt_label, main_prog):
                 ignore_thresh=train_parameters['ignore_thresh'],
                 # 对于类别不多的情况，设置为 False 会更合适一些，
                 # 不然 score 会很小
-                use_label_smooth=True,
+                use_label_smooth=False,
                 downsample_ratio=downsample_ratio)
             
             losses.append(fluid.layers.reduce_mean(loss))
@@ -421,7 +424,7 @@ def train():
     """
         模型训练
     """
-    logger.info("start train YOLOv3, train params:%s", str(train_parameters))
+    logger.info("start train YOLOv3...")
 
     logger.info("create place, use gpu:" + str(train_parameters['use_gpu']))
     logger.info("build network and program")
